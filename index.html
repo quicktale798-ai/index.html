@@ -360,6 +360,40 @@ select.inp option{background:var(--bg1);color:var(--t1)}
 </div>
 </div>
 
+<!-- WEEKLY TASK EDIT MODAL -->
+<div class="mo" id="mo-week-task">
+<div class="md">
+  <div class="md-title">تعديل المهمة</div>
+  <div class="mf"><label class="ml">اسم المهمة *</label><input class="inp" id="wet-name" placeholder="اسم المهمة..."></div>
+  <div class="mf"><label class="ml">الوقت</label><input class="inp" id="wet-time" type="time"></div>
+  <div class="mf"><label class="ml">المدة</label><input class="inp" id="wet-dur" placeholder="مثال: 30د، 1س، 45د"></div>
+  <div class="mf"><label class="ml">التصنيف</label>
+    <select class="inp" id="wet-cat">
+      <option value="دين">🕌 دين</option>
+      <option value="قرآن">📖 قرآن</option>
+      <option value="وظيفة">💼 وظيفة</option>
+      <option value="محتوى">📱 محتوى</option>
+      <option value="مهارات">🧠 مهارات</option>
+      <option value="إنجليزي">🇬🇧 إنجليزي</option>
+      <option value="صحة">💪 صحة</option>
+      <option value="عائلة">❤️ عائلة</option>
+      <option value="مالية">🚗 مالية</option>
+    </select>
+  </div>
+  <div class="mf"><label class="ml">ربط بهدف</label><select class="inp" id="wet-goal"><option value="">— بدون ربط —</option></select></div>
+  <div class="mf" style="display:flex;align-items:center;gap:10px">
+    <input type="checkbox" id="wet-notif" style="width:16px;height:16px;cursor:pointer">
+    <label for="wet-notif" class="ml" style="margin-bottom:0;cursor:pointer">تفعيل التنبيه عند وقت المهمة 🔔</label>
+  </div>
+  <div class="ma">
+    <button class="btn btn-danger btn-sm" onclick="deleteWeekTask()">حذف</button>
+    <button class="btn btn-ghost" onclick="document.getElementById('mo-week-task').classList.remove('show')">إلغاء</button>
+    <button class="btn btn-gold" onclick="saveWeekTask()">حفظ</button>
+  </div>
+</div>
+</div>
+
+
 <div class="app">
 <!-- SIDEBAR -->
 <nav class="sidebar" id="sidebar">
@@ -374,7 +408,6 @@ select.inp option{background:var(--bg1);color:var(--t1)}
   <div class="sb-nav">
     <div class="nav-sec">الرئيسية</div>
     <div class="ni active" onclick="nav('dashboard',this)"><span class="ni-ico">🏠</span>لوحة التحكم</div>
-    <div class="ni" onclick="nav('schedule',this)"><span class="ni-ico">📅</span>جدولي اليومي</div>
     <div class="ni" onclick="nav('daily',this)"><span class="ni-ico">✅</span>العادات اليومية</div>
     <div class="ni" onclick="nav('mood',this)"><span class="ni-ico">🌡</span>تتبع المزاج</div>
     <div class="nav-sec">التطوير</div>
@@ -419,10 +452,23 @@ select.inp option{background:var(--bg1);color:var(--t1)}
     <div class="stat-card sc-purple"><div class="si">🎯</div><div class="card-lbl">متوسط الأهداف</div><div class="sv" style="color:var(--purple)" id="db-avg">0%</div><div class="sl">تقدم عام</div></div>
   </div>
 
-  <!-- Daily Schedule on Dashboard -->
+  <!-- Weekly Schedule on Dashboard -->
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
     <div class="sec-lbl">جدول اليوم</div>
-    <div style="font-size:12px;font-weight:700;font-family:'IBM Plex Mono';color:var(--teal)" id="db-sch-prog">0/17</div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <div style="font-size:12px;font-weight:700;font-family:'IBM Plex Mono';color:var(--teal)" id="db-sch-prog">0/17</div>
+      <button class="btn btn-ghost btn-sm" onclick="nav('weekly',document.querySelector('[onclick*=weekly]'))">كل الأسبوع ←</button>
+    </div>
+  </div>
+  <!-- Day tabs small -->
+  <div style="display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap" id="db-day-tabs">
+    <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 9px" onclick="selectDbDay(0,this)">أحد</button>
+    <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 9px" onclick="selectDbDay(1,this)">اثنين</button>
+    <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 9px" onclick="selectDbDay(2,this)">ثلاثاء</button>
+    <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 9px" onclick="selectDbDay(3,this)">أربعاء</button>
+    <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 9px" onclick="selectDbDay(4,this)">خميس</button>
+    <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 9px" onclick="selectDbDay(5,this)">جمعة</button>
+    <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 9px" onclick="selectDbDay(6,this)">سبت</button>
   </div>
   <div class="card gap" id="db-sch-list"></div>
 
@@ -431,22 +477,6 @@ select.inp option{background:var(--bg1);color:var(--t1)}
     <div class="card-lbl">تقدم الأهداف — دوائر التقدم</div>
     <div class="goals-rings-grid" id="db-rings"></div>
   </div>
-</div>
-
-<!-- ══════════ SCHEDULE ══════════ -->
-<div class="page" id="page-schedule">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-    <div><div class="pg-title">جدولي اليومي</div><div class="pg-sub" style="margin-bottom:0" id="sch-type">—</div></div>
-    <button class="btn btn-ghost btn-sm" onclick="resetDayTasks()">↺ تعيين</button>
-  </div>
-  <div class="db-banner" style="margin-bottom:16px">
-    <div><div class="db-main" id="sch-date">—</div></div>
-    <div style="text-align:left">
-      <div style="font-size:10px;color:var(--t2)">تقدم اليوم</div>
-      <div style="font-size:17px;font-weight:800;font-family:'IBM Plex Mono';color:var(--teal)" id="sch-prog">0/17</div>
-    </div>
-  </div>
-  <div class="card" id="sch-list"></div>
 </div>
 
 <!-- ══════════ DAILY ══════════ -->
@@ -1328,7 +1358,257 @@ function showWeekDay(dayIdx, btn){
   renderWeeklyContent();
 }
 
+
+// ── WEEKLY TASK EDIT ──
+let editDay=-1, editTaskIdx=-1;
+
+function openWeekTaskEdit(dayIdx, taskIdx){
+  editDay=dayIdx; editTaskIdx=taskIdx;
+  const day=WEEK_DATA[dayIdx];
+  if(!day)return;
+  
+  // Use custom task if exists, else default
+  const wKey='wcustom_'+dayIdx;
+  const customTasks = S.daytasks&&S.daytasks[wKey] ? {...S.daytasks[wKey]} : {};
+  const t = customTasks[taskIdx] || day.tasks[taskIdx];
+  if(!t)return;
+
+  document.getElementById('wet-name').value=t.title||'';
+  document.getElementById('wet-time').value=t.time||'';
+  document.getElementById('wet-dur').value=t.dur||'';
+  document.getElementById('wet-cat').value=t.cat||'صحة';
+  document.getElementById('wet-notif').checked=t.notif||false;
+
+  // Goals select
+  const sel=document.getElementById('wet-goal');
+  sel.innerHTML='<option value="">— بدون ربط —</option>';
+  (S.goals||[]).forEach(g=>{
+    const o=document.createElement('option');
+    o.value=g.id;o.textContent=g.icon+' '+g.name;
+    if(t.goal===g.id)o.selected=true;
+    sel.appendChild(o);
+  });
+
+  document.getElementById('mo-week-task').classList.add('show');
+  setTimeout(()=>document.getElementById('wet-name').focus(),80);
+}
+
+function saveWeekTask(){
+  if(editDay<0||editTaskIdx<0)return;
+  const wKey='wcustom_'+editDay;
+  if(!S.daytasks)S.daytasks={};
+  if(!S.daytasks[wKey])S.daytasks[wKey]={};
+
+  const name=document.getElementById('wet-name').value.trim();
+  if(!name)return;
+
+  const original=WEEK_DATA[editDay]?.tasks[editTaskIdx]||{};
+  S.daytasks[wKey][editTaskIdx]={
+    ...original,
+    title:name,
+    time:document.getElementById('wet-time').value||original.time,
+    dur:document.getElementById('wet-dur').value||original.dur,
+    cat:document.getElementById('wet-cat').value,
+    goal:document.getElementById('wet-goal').value,
+    notif:document.getElementById('wet-notif').checked,
+  };
+
+  // Schedule notification if enabled
+  if(document.getElementById('wet-notif').checked){
+    scheduleNotification(name, document.getElementById('wet-time').value);
+  }
+
+  sched();
+  document.getElementById('mo-week-task').classList.remove('show');
+  renderWeeklyContent();
+  renderDashWeekly();
+}
+
+function deleteWeekTask(){
+  if(!confirm('حذف هذه المهمة؟'))return;
+  const wKey='wcustom_'+editDay;
+  if(S.daytasks&&S.daytasks[wKey])delete S.daytasks[wKey][editTaskIdx];
+  sched();
+  document.getElementById('mo-week-task').classList.remove('show');
+  renderWeeklyContent();
+  renderDashWeekly();
+}
+
+// Get task (custom override or default)
+function getTask(dayIdx, taskIdx){
+  const wKey='wcustom_'+dayIdx;
+  const custom=S.daytasks&&S.daytasks[wKey]&&S.daytasks[wKey][taskIdx];
+  return custom || (WEEK_DATA[dayIdx]?.tasks[taskIdx]||{});
+}
+
+// Get all tasks for a day (with custom overrides)
+function getDayAllTasks(dayIdx){
+  const base=WEEK_DATA[dayIdx]?.tasks||[];
+  const wKey='wcustom_'+dayIdx;
+  const custom=S.daytasks&&S.daytasks[wKey]?S.daytasks[wKey]:{};
+  return base.map((t,i)=>({...t,...(custom[i]||{})}));
+}
+
+// ── NOTIFICATIONS ──
+const notifTimers=[];
+function scheduleNotification(title, timeStr){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  const now=new Date();
+  const [h,m]=(timeStr||'').split(':').map(Number);
+  if(isNaN(h)||isNaN(m))return;
+  const target=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,m,0);
+  const diff=target-now;
+  if(diff<0)return; // Past
+  const timer=setTimeout(()=>{
+    new Notification('⏰ '+title,{
+      body:'حان وقت: '+title,
+      icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">⏰</text></svg>'
+    });
+  },diff);
+  notifTimers.push(timer);
+}
+
+function scheduleAllNotifications(dayIdx){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  const tasks=getDayAllTasks(dayIdx);
+  tasks.forEach(t=>{
+    if(t.notif&&t.time){
+      scheduleNotification(t.title,t.time);
+    }
+  });
+}
+
+async function requestNotifPermission(){
+  if(!('Notification' in window))return;
+  if(Notification.permission==='default'){
+    const p=await Notification.requestPermission();
+    if(p==='granted'){
+      // Schedule today's notifications
+      scheduleAllNotifications(new Date().getDay());
+    }
+  }else if(Notification.permission==='granted'){
+    scheduleAllNotifications(new Date().getDay());
+  }
+}
+
+// ── UPDATED WEEKLY RENDER ──
 function renderWeeklyContent(){
+  const el=document.getElementById('weekly-content');
+  if(!el)return;
+  const tasks=getDayAllTasks(currentWeekDay);
+  const day=WEEK_DATA[currentWeekDay];
+  if(!day)return;
+
+  const wKey='weekly_'+currentWeekDay+'_'+getWeekKey();
+  if(!S.daytasks)S.daytasks={};
+  if(!S.daytasks[wKey])S.daytasks[wKey]=[];
+  const done=S.daytasks[wKey];
+  let doneCount=done.length;
+  const total=tasks.length;
+
+  // Category summary
+  const cats={};
+  tasks.forEach(t=>{if(!cats[t.cat])cats[t.cat]=0;cats[t.cat]++;});
+
+  el.innerHTML=`
+    <div class="db-banner" style="margin-bottom:14px">
+      <div>
+        <div class="db-main">${day.name}</div>
+        <div class="db-sub">الهدف: ${day.target}</div>
+      </div>
+      <div style="text-align:left;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div style="font-size:10px;color:var(--t2)">تقدم اليوم</div>
+        <div style="font-size:20px;font-weight:800;font-family:'IBM Plex Mono';color:var(--teal)">${doneCount}/${total}</div>
+        <button class="btn btn-ghost btn-sm" style="font-size:10px" onclick="scheduleAllNotifications(${currentWeekDay})">🔔 جدولة تنبيهات اليوم</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      ${Object.entries(cats).map(([cat,n])=>`<span style="font-size:10px;padding:3px 9px;border-radius:99px;font-weight:600;background:${CAT_COLORS[cat]||'var(--blue)'}22;color:${CAT_COLORS[cat]||'var(--blue)'}">${cat} (${n})</span>`).join('')}
+    </div>
+
+    <div class="card">
+      <div class="task-list">
+        ${tasks.map((t,i)=>{
+          const isDone=done.includes(i);
+          const catColor=CAT_COLORS[t.cat]||'var(--blue)';
+          const gn=t.goal?goalName(t.goal):'';
+          return `<div class="sch-item">
+            <div class="sch-chk${isDone?' done':''}" onclick="toggleWeekTask(${i})">${isDone?'✓':''}</div>
+            <div style="min-width:50px"><span class="sch-time">${t.time}</span></div>
+            <div class="sch-body" style="cursor:pointer" onclick="openWeekTaskEdit(${currentWeekDay},${i})">
+              <div class="sch-title${isDone?' done':''}">
+                ${t.title}
+                ${t.notif?'🔔':''}
+              </div>
+              <div class="sch-meta">
+                ${t.dur?`<span class="sch-dur">${t.dur}</span>`:''}
+                <span style="font-size:10px;padding:1px 6px;border-radius:99px;background:${catColor}22;color:${catColor};font-weight:500">${t.cat}</span>
+                ${gn?`<span class="sch-goal">← ${gn}</span>`:''}
+              </div>
+            </div>
+            <button class="tbtn" onclick="openWeekTaskEdit(${currentWeekDay},${i})" title="تعديل">✏️</button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ── DASHBOARD WEEKLY ──
+let dbCurrentDay = new Date().getDay();
+
+function selectDbDay(dayIdx, btn){
+  dbCurrentDay=dayIdx;
+  document.querySelectorAll('#db-day-tabs button').forEach(b=>{
+    b.className='btn btn-ghost btn-sm';b.style.fontSize='11px';b.style.padding='4px 9px';
+  });
+  if(btn){btn.className='btn btn-gold btn-sm';btn.style.fontSize='11px';btn.style.padding='4px 9px';}
+  renderDashWeekly();
+}
+
+function renderDashWeekly(){
+  const el=document.getElementById('db-sch-list');if(!el)return;
+  const tasks=getDayAllTasks(dbCurrentDay);
+  const wKey='weekly_'+dbCurrentDay+'_'+getWeekKey();
+  if(!S.daytasks)S.daytasks={};
+  if(!S.daytasks[wKey])S.daytasks[wKey]=[];
+  const done=S.daytasks[wKey];
+  let doneCount=done.length;
+
+  el.innerHTML='<div class="task-list">'+tasks.map((t,i)=>{
+    const isDone=done.includes(i);
+    const catColor=CAT_COLORS[t.cat]||'var(--blue)';
+    return`<div class="sch-item">
+      <div class="sch-chk${isDone?' done':''}" onclick="toggleDbWeekTask(${i})">${isDone?'✓':''}</div>
+      <div style="min-width:50px"><span class="sch-time">${t.time}</span></div>
+      <div class="sch-body">
+        <div class="sch-title${isDone?' done':''}">${t.title}${t.notif?' 🔔':''}</div>
+        <div class="sch-meta">
+          ${t.dur?`<span class="sch-dur">${t.dur}</span>`:''}
+          <span style="font-size:10px;padding:1px 6px;border-radius:99px;background:${catColor}22;color:${catColor};font-weight:500">${t.cat}</span>
+        </div>
+      </div>
+      <button class="tbtn" onclick="openWeekTaskEdit(${dbCurrentDay},${i})" title="تعديل">✏️</button>
+    </div>`;
+  }).join('')+'</div>';
+
+  const pg=document.getElementById('db-sch-prog');
+  if(pg)pg.textContent=doneCount+'/'+tasks.length;
+}
+
+function toggleDbWeekTask(i){
+  const wKey='weekly_'+dbCurrentDay+'_'+getWeekKey();
+  if(!S.daytasks)S.daytasks={};
+  if(!S.daytasks[wKey])S.daytasks[wKey]=[];
+  const idx=S.daytasks[wKey].indexOf(i);
+  if(idx>=0)S.daytasks[wKey].splice(idx,1);else S.daytasks[wKey].push(i);
+  sched();renderDashWeekly();
+}
+
+
+// OLD renderWeeklyContent replaced
+function renderWeeklyContentOLD(){
   const el = document.getElementById('weekly-content');
   if(!el) return;
   const day = WEEK_DATA[currentWeekDay];
@@ -1439,10 +1719,15 @@ function renderAll(){
   TMAPS.forEach(([ctx,id])=>{if(id)renderTasks(ctx,id);});
   renderRings();renderDashRings();renderHabits();renderSchedule();renderDashSchedule();
   renderConn();renderPosts();renderNotes();renderJobsCount();renderDebts();
-  renderPomoStats();renderPomoLog();renderMood();renderStats();renderWeeklyContent();
-  // Highlight today tab
+  renderPomoStats();renderPomoLog();renderMood();renderStats();renderWeeklyContent();renderDashWeekly();
+  // Highlight today tab in weekly page
   const tabs=document.querySelectorAll('#week-day-tabs button');
   if(tabs[currentWeekDay])tabs[currentWeekDay].className='btn btn-gold btn-sm';
+  // Highlight today in dashboard day tabs
+  const dbTabs=document.querySelectorAll('#db-day-tabs button');
+  if(dbTabs[dbCurrentDay]){dbTabs[dbCurrentDay].className='btn btn-gold btn-sm';dbTabs[dbCurrentDay].style.fontSize='11px';dbTabs[dbCurrentDay].style.padding='4px 9px';}
+  // Request notifications
+  requestNotifPermission();
 }
 
 // ── INIT ──
