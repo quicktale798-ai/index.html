@@ -304,6 +304,34 @@ select.inp option{background:var(--bg1);color:var(--t1)}
   .stat-grid{grid-template-columns:repeat(2,1fr)}
   .week-stat-grid{grid-template-columns:repeat(4,1fr)}
 }
+
+/* ── CURRENT TIME HIGHLIGHT ── */
+.sch-item.current-time {
+  background: linear-gradient(135deg, rgba(245,200,66,.08), rgba(79,158,255,.05));
+  border-radius: 10px;
+  margin: 2px -8px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+.sch-item.current-time .sch-time {
+  color: var(--gold) !important;
+  font-weight: 800;
+}
+.sch-time.is-current {
+  color: var(--gold) !important;
+  font-weight: 800;
+  position: relative;
+}
+.sch-time.is-current::before {
+  content: '▶ ';
+  font-size: 8px;
+}
+.sch-item.past-time {
+  opacity: 0.5;
+}
+.sch-item.past-time .sch-time {
+  color: var(--t3) !important;
+}
 </style>
 </head>
 <body>
@@ -811,6 +839,80 @@ function saveMG(){
   sched();closeMG();renderAll();
 }
 function delGoal(idx){if(!confirm('حذف الهدف؟'))return;S.goals.splice(idx,1);sched();renderAll();}
+
+// ── CURRENT TIME HELPER ──
+function getCurrentTaskIdx(tasks){
+  const now = new Date();
+  const nowMins = now.getHours()*60 + now.getMinutes();
+  let current = -1;
+  for(let i=0;i<tasks.length;i++){
+    const t=tasks[i];
+    if(!t.time)continue;
+    const [h,m]=(t.time||'00:00').split(':').map(Number);
+    const taskMins=h*60+m;
+    if(taskMins<=nowMins) current=i;
+    else break;
+  }
+  return current;
+}
+
+function getTimePeriod(timeStr){
+  if(!timeStr)return 'future';
+  const now=new Date();
+  const nowMins=now.getHours()*60+now.getMinutes();
+  const [h,m]=(timeStr||'00:00').split(':').map(Number);
+  const taskMins=h*60+m;
+  if(taskMins>nowMins)return 'future';
+  if(taskMins===nowMins)return 'current';
+  return 'past';
+}
+
+// ── AUTO-UPDATE CURRENT TIME INDICATOR every 30s ──
+setInterval(()=>{renderWeeklyContent();renderDashWeekly();},30000);
+
+
+function updateGoalProgressFromTasks(){
+  const goals = S.goals||[];
+  goals.forEach((g,gi)=>{
+    // Count all tasks linked to this goal across all days
+    let total=0, done=0;
+    for(let dayIdx=0;dayIdx<7;dayIdx++){
+      const tasks=getDayAllTasks(dayIdx);
+      const wKey='weekly_'+dayIdx+'_'+getWeekKey();
+      const doneTasks=S.daytasks&&S.daytasks[wKey]?S.daytasks[wKey]:[];
+      tasks.forEach((t,i)=>{
+        if(t.goal===g.id){
+          total++;
+          if(doneTasks.includes(i))done++;
+        }
+      });
+      // Also count dashboard tasks
+      const dashTasks=S.tasks['dashboard']||[];
+      const habitsDone=S.habits[TODAY]||[];
+      dashTasks.forEach((t,i)=>{
+        if(t.goal===g.id){
+          total++;
+          if(t.done)done++;
+        }
+      });
+      // Goal-specific tasks
+      const goalTasks=S.tasks['goal-'+g.id]||[];
+      goalTasks.forEach(t=>{
+        total++;
+        if(t.done)done++;
+      });
+    }
+    if(total>0){
+      const newProg=Math.round((done/total)*100);
+      // Only update if changed significantly (avoid overriding manual slider)
+      // Blend: 70% manual + 30% auto
+      const current=g.prog||0;
+      const autoProg=Math.min(100,Math.round(current*0.7+newProg*0.3));
+      S.goals[gi].prog=autoProg;
+    }
+  });
+}
+
 function updProg(idx,val){if(S.goals[idx])S.goals[idx].prog=parseInt(val);sched();renderRings();renderDashRings();}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMT();closeMG();document.getElementById('mo-pomo').classList.remove('show');}});
 
@@ -1533,13 +1635,18 @@ function renderWeeklyContent(){
           const isDone=done.includes(i);
           const catColor=CAT_COLORS[t.cat]||'var(--blue)';
           const gn=t.goal?goalName(t.goal):'';
-          return `<div class="sch-item">
+          const period = getTimePeriod(t.time);
+          const isCurrent = (i===getCurrentTaskIdx(tasks));
+          const rowClass = isCurrent?'sch-item current-time':(period==='past'&&!isDone?'sch-item past-time':'sch-item');
+          const timeClass = isCurrent?'sch-time is-current':'sch-time';
+          return `<div class="${rowClass}">
             <div class="sch-chk${isDone?' done':''}" onclick="toggleWeekTask(${i})">${isDone?'✓':''}</div>
-            <div style="min-width:50px"><span class="sch-time">${t.time}</span></div>
+            <div style="min-width:54px"><span class="${timeClass}">${t.time}</span></div>
             <div class="sch-body" style="cursor:pointer" onclick="openWeekTaskEdit(${currentWeekDay},${i})">
               <div class="sch-title${isDone?' done':''}">
                 ${t.title}
                 ${t.notif?'🔔':''}
+                ${isCurrent?'<span style="font-size:10px;background:var(--gold);color:#1a1200;padding:1px 6px;border-radius:99px;font-weight:700;margin-right:4px">الآن</span>':''}
               </div>
               <div class="sch-meta">
                 ${t.dur?`<span class="sch-dur">${t.dur}</span>`:''}
@@ -1603,7 +1710,8 @@ function toggleDbWeekTask(i){
   if(!S.daytasks[wKey])S.daytasks[wKey]=[];
   const idx=S.daytasks[wKey].indexOf(i);
   if(idx>=0)S.daytasks[wKey].splice(idx,1);else S.daytasks[wKey].push(i);
-  sched();renderDashWeekly();
+  updateGoalProgressFromTasks();
+  sched();renderDashWeekly();renderRings();renderDashRings();
 }
 
 
@@ -1685,7 +1793,8 @@ function toggleWeekTask(i){
   const idx = S.daytasks[wKey].indexOf(i);
   if(idx>=0) S.daytasks[wKey].splice(idx,1);
   else S.daytasks[wKey].push(i);
-  sched(); renderWeeklyContent();
+  updateGoalProgressFromTasks();
+  sched(); renderWeeklyContent(); renderDashWeekly(); renderRings(); renderDashRings();
 }
 
 
