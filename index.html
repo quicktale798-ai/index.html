@@ -381,6 +381,7 @@ select.inp option{background:var(--bg1);color:var(--t1)}
     <div class="ni" onclick="nav('goals',this)"><span class="ni-ico">🎯</span>الأهداف الكبرى</div>
     <div class="ni" onclick="nav('pomodoro',this)"><span class="ni-ico">⏱</span>بومودورو</div>
     <div class="ni" onclick="nav('stats',this)"><span class="ni-ico">📊</span>إحصائيات الأسبوع</div>
+    <div class="ni" onclick="nav('weekly',this)"><span class="ni-ico">🗓</span>الجدول الأسبوعي</div>
     <div class="nav-sec">العمل</div>
     <div class="ni" onclick="nav('linkedin',this)"><span class="ni-ico">💼</span>LinkedIn</div>
     <div class="ni" onclick="nav('finance',this)"><span class="ni-ico">💰</span>المالية</div>
@@ -547,6 +548,26 @@ select.inp option{background:var(--bg1);color:var(--t1)}
   <div class="row"><div class="sec-lbl">سجل المزاج — آخر 7 أيام</div></div>
   <div class="card"><div id="mood-week" class="mood-history"></div></div>
 </div>
+
+<!-- ══════════ WEEKLY SCHEDULE ══════════ -->
+<div class="page" id="page-weekly">
+  <div class="pg-title">🗓 الجدول الأسبوعي</div>
+  <div class="pg-sub">جميع المهام مرتبة على مدار الأسبوع</div>
+
+  <!-- Week nav -->
+  <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap" id="week-day-tabs">
+    <button class="btn btn-gold btn-sm" onclick="showWeekDay(0,this)">الأحد</button>
+    <button class="btn btn-ghost btn-sm" onclick="showWeekDay(1,this)">الاثنين</button>
+    <button class="btn btn-ghost btn-sm" onclick="showWeekDay(2,this)">الثلاثاء</button>
+    <button class="btn btn-ghost btn-sm" onclick="showWeekDay(3,this)">الأربعاء</button>
+    <button class="btn btn-ghost btn-sm" onclick="showWeekDay(4,this)">الخميس</button>
+    <button class="btn btn-ghost btn-sm" onclick="showWeekDay(5,this)">الجمعة</button>
+    <button class="btn btn-ghost btn-sm" onclick="showWeekDay(6,this)">السبت</button>
+  </div>
+
+  <div id="weekly-content"></div>
+</div>
+
 
 <!-- ══════════ LINKEDIN ══════════ -->
 <div class="page" id="page-linkedin">
@@ -1141,6 +1162,253 @@ function renderPomoLog(){
 if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();
 
 // ── RENDER ALL ──
+
+// ── WEEKLY SCHEDULE DATA ──
+const WEEK_DATA = {
+  0: { // الأحد
+    name: 'الأحد', type: 'weekday', target: '300 ريال',
+    tasks: [
+      {time:'04:00', title:'🕌 صلاة الفجر', dur:'30د', cat:'دين', color:'amber'},
+      {time:'04:30', title:'📖 أدعية + حفظ قرآن', dur:'60د', cat:'قرآن', color:'amber', goal:'g3'},
+      {time:'05:30', title:'📱 محتوى القناة / سكريبت قصة', dur:'60د', cat:'محتوى', color:'purple', goal:'g2'},
+      {time:'06:00', title:'🚗 أوبر — شفت الصباح', dur:'4س', cat:'مالية', color:'green'},
+      {time:'10:00', title:'☕ راحة + وجبة', dur:'45د', cat:'صحة', color:'teal'},
+      {time:'10:45', title:'💼 تقديم على 3 وظائف', dur:'45د', cat:'وظيفة', color:'gold', goal:'g1'},
+      {time:'11:30', title:'🇬🇧 إنجليزي — Duolingo + محادثة', dur:'30د', cat:'إنجليزي', color:'blue', goal:'g4'},
+      {time:'12:00', title:'💪 تمارين Bodyweight', dur:'30د', cat:'صحة', color:'teal', goal:'g5'},
+      {time:'12:30', title:'🕌 صلاة الظهر + غداء', dur:'60د', cat:'دين', color:'amber'},
+      {time:'13:30', title:'❤️ وقت عائلة — سلطان ونورا', dur:'60د', cat:'عائلة', color:'red', goal:'g6'},
+      {time:'14:30', title:'😴 قيلولة', dur:'60د', cat:'صحة', color:'teal'},
+      {time:'15:00', title:'🕌 صلاة العصر + صدقة 10 ريال', dur:'30د', cat:'دين', color:'amber'},
+      {time:'15:30', title:'🚗 أوبر — شفت المساء', dur:'3.5س', cat:'مالية', color:'green'},
+      {time:'19:00', title:'🕌 صلاة المغرب + عشاء + عائلة', dur:'75د', cat:'دين', color:'amber'},
+      {time:'20:15', title:'💼 LinkedIn + رسائل للمسؤولين', dur:'30د', cat:'وظيفة', color:'gold', goal:'g1'},
+      {time:'20:45', title:'🧠 Excel — تعلم وطبّق', dur:'30د', cat:'مهارات', color:'green', goal:'g7'},
+      {time:'21:30', title:'🕌 صلاة العشاء + نوم', dur:'', cat:'دين', color:'amber'},
+    ]
+  },
+  1: { // الاثنين
+    name: 'الاثنين', type: 'weekday', target: '300 ريال',
+    tasks: [
+      {time:'04:00', title:'🕌 صلاة الفجر', dur:'30د', cat:'دين', color:'amber'},
+      {time:'04:30', title:'📖 مراجعة ما حفظت من الجزء 30', dur:'60د', cat:'قرآن', color:'amber', goal:'g3'},
+      {time:'05:30', title:'📱 توليد برومبتات الصور للقصة', dur:'60د', cat:'محتوى', color:'purple', goal:'g2'},
+      {time:'06:00', title:'🚗 أوبر — شفت الصباح', dur:'4س', cat:'مالية', color:'green'},
+      {time:'10:00', title:'☕ راحة + وجبة', dur:'45د', cat:'صحة', color:'teal'},
+      {time:'10:45', title:'💼 تقديم على 3 وظائف', dur:'45د', cat:'وظيفة', color:'gold', goal:'g1'},
+      {time:'11:30', title:'🇬🇧 استماع BBC Learning English', dur:'30د', cat:'إنجليزي', color:'blue', goal:'g4'},
+      {time:'12:00', title:'🚶 مشي سريع 20 دقيقة', dur:'20د', cat:'صحة', color:'teal', goal:'g5'},
+      {time:'12:30', title:'🕌 صلاة الظهر + غداء', dur:'60د', cat:'دين', color:'amber'},
+      {time:'13:30', title:'❤️ قصة لسلطان + وقت نورا', dur:'60د', cat:'عائلة', color:'red', goal:'g6'},
+      {time:'14:30', title:'😴 قيلولة', dur:'60د', cat:'صحة', color:'teal'},
+      {time:'15:00', title:'🕌 صلاة العصر + صدقة 10 ريال', dur:'30د', cat:'دين', color:'amber'},
+      {time:'15:30', title:'🚗 أوبر — شفت المساء', dur:'3.5س', cat:'مالية', color:'green'},
+      {time:'19:00', title:'🕌 صلاة المغرب + عشاء + عائلة', dur:'75د', cat:'دين', color:'amber'},
+      {time:'20:15', title:'💼 LinkedIn + متابعة تقديمات', dur:'30د', cat:'وظيفة', color:'gold', goal:'g1'},
+      {time:'20:45', title:'❤️ 15 دقيقة مع الزوجة بدون هاتف', dur:'15د', cat:'عائلة', color:'red', goal:'g6'},
+      {time:'21:30', title:'🕌 صلاة العشاء + نوم', dur:'', cat:'دين', color:'amber'},
+    ]
+  },
+  2: { // الثلاثاء
+    name: 'الثلاثاء', type: 'weekday', target: '300 ريال',
+    tasks: [
+      {time:'04:00', title:'🕌 صلاة الفجر', dur:'30د', cat:'دين', color:'amber'},
+      {time:'04:30', title:'📖 حفظ آيات جديدة من البروج', dur:'60د', cat:'قرآن', color:'amber', goal:'g3'},
+      {time:'05:30', title:'📱 تحريك الصور بـ Kling AI', dur:'60د', cat:'محتوى', color:'purple', goal:'g2'},
+      {time:'06:00', title:'🚗 أوبر — شفت الصباح', dur:'4س', cat:'مالية', color:'green'},
+      {time:'10:00', title:'☕ راحة + وجبة', dur:'45د', cat:'صحة', color:'teal'},
+      {time:'10:45', title:'💼 تقديم على المستشفيات الخاصة', dur:'45د', cat:'وظيفة', color:'gold', goal:'g1'},
+      {time:'11:30', title:'🇬🇧 محادثة مع Claude بالإنجليزي', dur:'30د', cat:'إنجليزي', color:'blue', goal:'g4'},
+      {time:'12:00', title:'💪 تمارين Bodyweight', dur:'30د', cat:'صحة', color:'teal', goal:'g5'},
+      {time:'12:30', title:'🕌 صلاة الظهر + غداء', dur:'60د', cat:'دين', color:'amber'},
+      {time:'13:30', title:'❤️ لعب مع سلطان 20 دقيقة', dur:'60د', cat:'عائلة', color:'red', goal:'g6'},
+      {time:'14:30', title:'😴 قيلولة', dur:'60د', cat:'صحة', color:'teal'},
+      {time:'15:00', title:'🕌 صلاة العصر + صدقة 10 ريال', dur:'30د', cat:'دين', color:'amber'},
+      {time:'15:30', title:'🚗 أوبر — شفت المساء', dur:'3.5س', cat:'مالية', color:'green'},
+      {time:'19:00', title:'🕌 صلاة المغرب + عشاء + عائلة', dur:'75د', cat:'دين', color:'amber'},
+      {time:'20:15', title:'💼 LinkedIn + 5 connections جديدة', dur:'30د', cat:'وظيفة', color:'gold', goal:'g1'},
+      {time:'20:45', title:'📱 نشر القصة على TikTok ثم Instagram', dur:'15د', cat:'محتوى', color:'purple', goal:'g2'},
+      {time:'21:30', title:'🕌 صلاة العشاء + نوم', dur:'', cat:'دين', color:'amber'},
+    ]
+  },
+  3: { // الأربعاء
+    name: 'الأربعاء', type: 'weekday', target: '300 ريال',
+    tasks: [
+      {time:'04:00', title:'🕌 صلاة الفجر', dur:'30د', cat:'دين', color:'amber'},
+      {time:'04:30', title:'📖 مراجعة + تثبيت البروج', dur:'60د', cat:'قرآن', color:'amber', goal:'g3'},
+      {time:'05:30', title:'🧠 AI Tools — برومبت احترافي للقناة', dur:'30د', cat:'مهارات', color:'green', goal:'g7'},
+      {time:'06:00', title:'🚗 أوبر — شفت الصباح', dur:'4س', cat:'مالية', color:'green'},
+      {time:'10:00', title:'☕ راحة + وجبة', dur:'45د', cat:'صحة', color:'teal'},
+      {time:'10:45', title:'💼 تقديم على 3 وظائف', dur:'45د', cat:'وظيفة', color:'gold', goal:'g1'},
+      {time:'11:30', title:'🇬🇧 استماع + كتابة باراغراف بالإنجليزي', dur:'30د', cat:'إنجليزي', color:'blue', goal:'g4'},
+      {time:'12:00', title:'🚶 مشي سريع 20 دقيقة', dur:'20د', cat:'صحة', color:'teal', goal:'g5'},
+      {time:'12:30', title:'🕌 صلاة الظهر + غداء', dur:'60د', cat:'دين', color:'amber'},
+      {time:'13:30', title:'❤️ نشاط عائلي كامل — الكل مع بعض', dur:'60د', cat:'عائلة', color:'red', goal:'g6'},
+      {time:'14:30', title:'😴 قيلولة', dur:'60د', cat:'صحة', color:'teal'},
+      {time:'15:00', title:'🕌 صلاة العصر + صدقة 10 ريال', dur:'30د', cat:'دين', color:'amber'},
+      {time:'15:30', title:'🚗 أوبر — شفت المساء', dur:'3.5س', cat:'مالية', color:'green'},
+      {time:'19:00', title:'🕌 صلاة المغرب + عشاء + عائلة', dur:'75د', cat:'دين', color:'amber'},
+      {time:'20:15', title:'💼 LinkedIn + كتابة بوست الأسبوع', dur:'30د', cat:'وظيفة', color:'gold', goal:'g1'},
+      {time:'20:45', title:'❤️ هدية بسيطة للزوجة', dur:'', cat:'عائلة', color:'red', goal:'g6'},
+      {time:'21:30', title:'🕌 صلاة العشاء + نوم', dur:'', cat:'دين', color:'amber'},
+    ]
+  },
+  4: { // الخميس
+    name: 'الخميس', type: 'weekday', target: '300 ريال',
+    tasks: [
+      {time:'04:00', title:'🕌 صلاة الفجر', dur:'30د', cat:'دين', color:'amber'},
+      {time:'04:30', title:'📖 بداية الانشقاق — حفظ 1-13', dur:'60د', cat:'قرآن', color:'amber', goal:'g3'},
+      {time:'05:30', title:'📱 مونتاج القصة على CapCut', dur:'60د', cat:'محتوى', color:'purple', goal:'g2'},
+      {time:'06:00', title:'🚗 أوبر — شفت الصباح', dur:'4س', cat:'مالية', color:'green'},
+      {time:'10:00', title:'☕ راحة + وجبة', dur:'45د', cat:'صحة', color:'teal'},
+      {time:'10:45', title:'💼 متابعة جميع التقديمات + فوّل', dur:'45د', cat:'وظيفة', color:'gold', goal:'g1'},
+      {time:'11:30', title:'🇬🇧 محادثة + حفظ 10 كلمات مهنية', dur:'30د', cat:'إنجليزي', color:'blue', goal:'g4'},
+      {time:'12:00', title:'💪 تمارين Bodyweight', dur:'30د', cat:'صحة', color:'teal', goal:'g5'},
+      {time:'12:30', title:'🕌 صلاة الظهر + غداء', dur:'60د', cat:'دين', color:'amber'},
+      {time:'13:30', title:'❤️ وقت عائلة — سلطان ونورا', dur:'60د', cat:'عائلة', color:'red', goal:'g6'},
+      {time:'14:30', title:'😴 قيلولة', dur:'60د', cat:'صحة', color:'teal'},
+      {time:'15:00', title:'🕌 صلاة العصر + صدقة 10 ريال', dur:'30د', cat:'دين', color:'amber'},
+      {time:'15:30', title:'🚗 أوبر — شفت المساء', dur:'3.5س', cat:'مالية', color:'green'},
+      {time:'19:00', title:'🕌 صلاة المغرب + عشاء + عائلة', dur:'75د', cat:'دين', color:'amber'},
+      {time:'20:15', title:'💼 LinkedIn + تواصل مع شخص جديد', dur:'30د', cat:'وظيفة', color:'gold', goal:'g1'},
+      {time:'20:45', title:'📱 نشر القصة الثانية للأسبوع', dur:'15د', cat:'محتوى', color:'purple', goal:'g2'},
+      {time:'21:30', title:'🕌 صلاة العشاء + نوم', dur:'', cat:'دين', color:'amber'},
+    ]
+  },
+  5: { // الجمعة
+    name: 'الجمعة', type: 'weekend', target: '150 ريال (شفت مسائي)',
+    tasks: [
+      {time:'04:00', title:'🕌 صلاة الفجر + قرآن', dur:'90د', cat:'دين', color:'amber', goal:'g3'},
+      {time:'05:30', title:'📱 محتوى متعمق — تصوير ومونتاج', dur:'120د', cat:'محتوى', color:'purple', goal:'g2'},
+      {time:'07:30', title:'💼 تقديم وظائف + LinkedIn', dur:'60د', cat:'وظيفة', color:'gold', goal:'g1'},
+      {time:'09:00', title:'🇬🇧 تعليق بالإنجليزي + مراجعة كلمات', dur:'30د', cat:'إنجليزي', color:'blue', goal:'g4'},
+      {time:'10:00', title:'☕ راحة + صلاة الضحى', dur:'60د', cat:'دين', color:'amber'},
+      {time:'12:00', title:'🕌 صلاة الجمعة', dur:'90د', cat:'دين', color:'amber'},
+      {time:'13:30', title:'❤️ وقت عائلة كامل — زيارة أهل', dur:'120د', cat:'عائلة', color:'red', goal:'g6'},
+      {time:'15:00', title:'🕌 صلاة العصر + صدقة 10 ريال', dur:'30د', cat:'دين', color:'amber'},
+      {time:'15:30', title:'🚗 أوبر — شفت المسائي', dur:'3.5س', cat:'مالية', color:'green'},
+      {time:'19:00', title:'🕌 صلاة المغرب + عشاء', dur:'60د', cat:'دين', color:'amber'},
+      {time:'20:00', title:'📖 مراجعة كبرى للجزء الثلاثين', dur:'60د', cat:'قرآن', color:'amber', goal:'g3'},
+      {time:'21:30', title:'🕌 صلاة العشاء + نوم', dur:'', cat:'دين', color:'amber'},
+    ]
+  },
+  6: { // السبت
+    name: 'السبت', type: 'weekend', target: '150 ريال (شفت مسائي)',
+    tasks: [
+      {time:'04:00', title:'🕌 صلاة الفجر + قرآن', dur:'90د', cat:'دين', color:'amber', goal:'g3'},
+      {time:'05:30', title:'📱 محتوى القناة — إنتاج قصة كاملة', dur:'120د', cat:'محتوى', color:'purple', goal:'g2'},
+      {time:'07:30', title:'🧠 Excel أو مهارة جديدة', dur:'60د', cat:'مهارات', color:'green', goal:'g7'},
+      {time:'09:00', title:'🇬🇧 إنجليزي + مراجعة أسبوعية', dur:'30د', cat:'إنجليزي', color:'blue', goal:'g4'},
+      {time:'10:00', title:'☕ راحة + صلاة الظهر', dur:'90د', cat:'دين', color:'amber'},
+      {time:'13:00', title:'❤️ وقت عائلة — نشاط مع الأطفال', dur:'120د', cat:'عائلة', color:'red', goal:'g6'},
+      {time:'15:00', title:'🕌 صلاة العصر + قياس الخصر', dur:'30د', cat:'دين', color:'amber', goal:'g5'},
+      {time:'15:30', title:'🚗 أوبر — شفت المسائي', dur:'3.5س', cat:'مالية', color:'green'},
+      {time:'19:00', title:'🕌 صلاة المغرب + عشاء', dur:'60د', cat:'دين', color:'amber'},
+      {time:'20:00', title:'📱 نشر القصة الثالثة للأسبوع + تحليل أداء', dur:'30د', cat:'محتوى', color:'purple', goal:'g2'},
+      {time:'20:30', title:'❤️ 30 دقيقة مع الزوجة بدون هواتف', dur:'30د', cat:'عائلة', color:'red', goal:'g6'},
+      {time:'21:30', title:'🕌 صلاة العشاء + نوم', dur:'', cat:'دين', color:'amber'},
+    ]
+  },
+};
+
+const CAT_COLORS = {
+  'دين':'var(--amber)','قرآن':'var(--amber)','وظيفة':'var(--gold)',
+  'محتوى':'var(--purple)','مهارات':'var(--green)','إنجليزي':'var(--blue)',
+  'صحة':'var(--teal)','عائلة':'var(--red)','مالية':'var(--green)',
+};
+
+let currentWeekDay = new Date().getDay();
+
+function showWeekDay(dayIdx, btn){
+  currentWeekDay = dayIdx;
+  document.querySelectorAll('#week-day-tabs button').forEach(b=>{
+    b.className='btn btn-ghost btn-sm';
+  });
+  if(btn) btn.className='btn btn-gold btn-sm';
+  renderWeeklyContent();
+}
+
+function renderWeeklyContent(){
+  const el = document.getElementById('weekly-content');
+  if(!el) return;
+  const day = WEEK_DATA[currentWeekDay];
+  if(!day) return;
+
+  // Init weekly tasks done state
+  const wKey = 'weekly_'+currentWeekDay+'_'+getWeekKey();
+  if(!S.daytasks) S.daytasks={};
+  if(!S.daytasks[wKey]) S.daytasks[wKey]=[];
+  const done = S.daytasks[wKey];
+
+  const doneCount = done.length;
+  const total = day.tasks.length;
+
+  // Group by category for summary
+  const cats = {};
+  day.tasks.forEach(t=>{ if(!cats[t.cat]) cats[t.cat]=0; cats[t.cat]++; });
+
+  el.innerHTML = `
+    <!-- Day Header -->
+    <div class="db-banner" style="margin-bottom:14px">
+      <div>
+        <div class="db-main">${day.name}</div>
+        <div class="db-sub">الهدف: ${day.target}</div>
+      </div>
+      <div style="text-align:left">
+        <div style="font-size:10px;color:var(--t2)">تقدم اليوم</div>
+        <div style="font-size:20px;font-weight:800;font-family:'IBM Plex Mono';color:var(--teal)">${doneCount}/${total}</div>
+      </div>
+    </div>
+
+    <!-- Category Tags -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      ${Object.entries(cats).map(([cat,n])=>
+        `<span style="font-size:10px;padding:3px 9px;border-radius:99px;font-weight:600;background:${CAT_COLORS[cat]||'var(--blue)'}22;color:${CAT_COLORS[cat]||'var(--blue)'}">${cat} (${n})</span>`
+      ).join('')}
+    </div>
+
+    <!-- Tasks -->
+    <div class="card">
+      <div class="task-list">
+        ${day.tasks.map((t,i)=>{
+          const isDone = done.includes(i);
+          const catColor = CAT_COLORS[t.cat]||'var(--blue)';
+          return `<div class="sch-item">
+            <div class="sch-chk${isDone?' done':''}" onclick="toggleWeekTask(${i})">${isDone?'✓':''}</div>
+            <div style="min-width:50px"><span class="sch-time">${t.time}</span></div>
+            <div class="sch-body">
+              <div class="sch-title${isDone?' done':''}">${t.title}</div>
+              <div class="sch-meta">
+                ${t.dur?`<span class="sch-dur">${t.dur}</span>`:''}
+                <span style="font-size:10px;padding:1px 6px;border-radius:99px;background:${catColor}22;color:${catColor};font-weight:500">${t.cat}</span>
+                ${t.goal?`<span class="sch-goal">← ${goalName(t.goal)}</span>`:''}
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function getWeekKey(){
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day;
+  return new Date(d.setDate(diff)).toDateString();
+}
+
+function toggleWeekTask(i){
+  const wKey = 'weekly_'+currentWeekDay+'_'+getWeekKey();
+  if(!S.daytasks) S.daytasks={};
+  if(!S.daytasks[wKey]) S.daytasks[wKey]=[];
+  const idx = S.daytasks[wKey].indexOf(i);
+  if(idx>=0) S.daytasks[wKey].splice(idx,1);
+  else S.daytasks[wKey].push(i);
+  sched(); renderWeeklyContent();
+}
+
+
 // ── DASHBOARD SCHEDULE ──
 function renderDashSchedule(){
   const el=document.getElementById('db-sch-list');if(!el)return;
@@ -1171,7 +1439,10 @@ function renderAll(){
   TMAPS.forEach(([ctx,id])=>{if(id)renderTasks(ctx,id);});
   renderRings();renderDashRings();renderHabits();renderSchedule();renderDashSchedule();
   renderConn();renderPosts();renderNotes();renderJobsCount();renderDebts();
-  renderPomoStats();renderPomoLog();renderMood();renderStats();
+  renderPomoStats();renderPomoLog();renderMood();renderStats();renderWeeklyContent();
+  // Highlight today tab
+  const tabs=document.querySelectorAll('#week-day-tabs button');
+  if(tabs[currentWeekDay])tabs[currentWeekDay].className='btn btn-gold btn-sm';
 }
 
 // ── INIT ──
