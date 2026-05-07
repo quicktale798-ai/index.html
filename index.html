@@ -418,14 +418,18 @@ select.inp option{background:var(--bg1);color:var(--t1)}
     <div class="stat-card sc-purple"><div class="si">🎯</div><div class="card-lbl">متوسط الأهداف</div><div class="sv" style="color:var(--purple)" id="db-avg">0%</div><div class="sl">تقدم عام</div></div>
   </div>
 
+  <!-- Daily Schedule on Dashboard -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div class="sec-lbl">جدول اليوم</div>
+    <div style="font-size:12px;font-weight:700;font-family:'IBM Plex Mono';color:var(--teal)" id="db-sch-prog">0/17</div>
+  </div>
+  <div class="card gap" id="db-sch-list"></div>
+
   <!-- Mini Rings on Dashboard -->
   <div class="card gap">
     <div class="card-lbl">تقدم الأهداف — دوائر التقدم</div>
     <div class="goals-rings-grid" id="db-rings"></div>
   </div>
-
-  <div class="row"><div class="sec-lbl">مهام اليوم</div><button class="btn btn-ghost btn-sm" onclick="openMT('dashboard')">+ مهمة</button></div>
-  <div class="card"><div class="task-list" id="tl-dashboard"></div></div>
 </div>
 
 <!-- ══════════ SCHEDULE ══════════ -->
@@ -1137,9 +1141,35 @@ function renderPomoLog(){
 if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();
 
 // ── RENDER ALL ──
+// ── DASHBOARD SCHEDULE ──
+function renderDashSchedule(){
+  const el=document.getElementById('db-sch-list');if(!el)return;
+  const tasks=getDayTasks();
+  if(!S.daytasks)S.daytasks={};
+  if(!S.daytasks[TODAY])S.daytasks[TODAY]=[];
+  const done=S.daytasks[TODAY];let doneCount=0;
+  el.innerHTML='<div class="task-list">'+tasks.map((t,i)=>{
+    const isDone=done.includes(i);if(isDone)doneCount++;
+    return'<div class="sch-item">'+
+      '<div class="sch-chk'+(isDone?' done':'')+'" onclick="toggleDT('+i+')">'+(isDone?'✓':'')+'</div>'+
+      '<div style="min-width:50px"><span class="sch-time">'+t.time+'</span></div>'+
+      '<div class="sch-body">'+
+        '<div class="sch-title'+(isDone?' done':'')+'">'+t.title+'</div>'+
+        '<div class="sch-meta">'+
+          (t.dur?'<span class="sch-dur">'+t.dur+'</span>':'')+
+          (t.goal?'<span class="sch-goal">← '+t.goal+'</span>':'')+
+          (t.note?'<span class="sch-note">'+t.note+'</span>':'')+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('')+'</div>';
+  const pg=document.getElementById('db-sch-prog');
+  if(pg)pg.textContent=doneCount+'/'+tasks.length;
+}
+
 function renderAll(){
   TMAPS.forEach(([ctx,id])=>{if(id)renderTasks(ctx,id);});
-  renderRings();renderDashRings();renderHabits();renderSchedule();
+  renderRings();renderDashRings();renderHabits();renderSchedule();renderDashSchedule();
   renderConn();renderPosts();renderNotes();renderJobsCount();renderDebts();
   renderPomoStats();renderPomoLog();renderMood();renderStats();
 }
